@@ -1,0 +1,98 @@
+from tkinter import *
+from tkinter.ttk import *
+import random
+from itertools import product
+import time
+import csv
+
+window = Tk()
+
+distances = [64, 128, 256, 512]
+widths = [4, 8, 16, 32]
+combo = list(product(distances, widths))
+random.shuffle(combo)
+centre_width = 400
+centre_height = 300
+current_target = 'R'
+repetitions = 4
+click_count = 0
+combo_pos = 0
+
+c = Canvas(window, width=(centre_width*2), height=(centre_height*2), background='white')
+c.pack()
+
+rect_left = c.create_rectangle(0, 0, 0, 0, fill="blue", outline="blue", tag='left')
+rect_right = c.create_rectangle(0, 0, 0, 0, fill="green2", outline="green2", tag='right')
+
+def timer():
+    global time
+    global start
+    global combo
+    global combo_pos
+    global click_count
+   
+    total_time = (time.time() - start) * 1000
+    if click_count ==1 and combo_pos == 0:
+        with open('fitts.csv', 'w', newline='') as csvfile:
+            timewriter = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            timewriter.writerow(['Courteney', combo[combo_pos][0],combo[combo_pos][1], click_count, total_time])  
+    else:
+        with open('fitts.csv', 'a', newline='') as csvfile:
+            timewriter = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            timewriter.writerow(['Courteney', combo[combo_pos][0],combo[combo_pos][1], click_count, total_time])  
+    print("*")
+
+def pole_size():
+    global combo
+    if combo_pos >= len(combo):
+        window.destroy()
+        return
+
+    #Left Pole
+    right_distance = centre_width-(combo[combo_pos][0]/1.5)
+    right_width = right_distance-combo[combo_pos][1]
+    c.coords('left',right_width , 0, right_distance, centre_height*2) # change coordinates
+   
+    #Right pole
+    right_distance = centre_width+(combo[combo_pos][0]/1.5)
+    right_width = right_distance+combo[combo_pos][1]
+    c.coords('right',right_width , 0, right_distance, centre_height*2) # change coordinates
+   
+def change_target():
+    global current_target
+    if (current_target == 'R'):
+        current_target = 'L'
+    elif (current_target == 'L'):
+        current_target = 'R'
+   
+
+def super_clicked(should_count_click):
+    global start
+    global click_count
+    global combo_pos
+    if should_count_click:
+        click_count += 1
+        change_target()
+        timer()
+        start = time.time()
+    if click_count >= repetitions:
+        click_count = 0
+        combo_pos += 1
+        pole_size()
+   
+def colour_change_left(self):
+    c.itemconfigure(rect_left, fill="blue", outline="blue")
+    c.itemconfigure(rect_right,fill="green2", outline="green2")
+    super_clicked(current_target == 'L')
+   
+
+def colour_change_right(self):
+    c.itemconfigure(rect_left, fill="green2", outline="green2")
+    c.itemconfigure(rect_right, fill="blue", outline="blue")
+    super_clicked(current_target == 'R')
+   
+start = time.time()   
+pole_size()
+c.tag_bind(rect_right, "<ButtonPress-1>", colour_change_right)
+c.tag_bind(rect_left, "<ButtonPress-1>", colour_change_left)
+window.mainloop()
