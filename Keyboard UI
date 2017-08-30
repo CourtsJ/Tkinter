@@ -1,0 +1,90 @@
+
+from tkinter import *
+from tkinter.ttk import *
+import time
+import csv
+import random
+
+def timer():
+   global time
+   global block
+   global current_target
+   global correct
+   total_time = (time.time() - start) * 1000
+   if correct ==1:
+      with open('keyboard_test.csv', 'w', newline='') as csvfile:
+         timewriter = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+         timewriter.writerow(['Courteney', 'Static', block, target[current_target], total_time])  
+   else:
+      with open('keyboard_test.csv', 'a', newline='') as csvfile:
+         timewriter = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+         timewriter.writerow(['Courteney', 'Static', block, target[current_target], total_time])        
+  
+def quit():
+   window.destroy()
+ 
+  
+def shuffle(board):
+      shuffled_board = ['','','']
+      newboard = list(board)
+      random.shuffle(newboard)
+      newboard = ''.join(newboard)
+      for i in range(10):
+         shuffled_board[0]+=newboard[i]
+      for i in range(9):
+         shuffled_board[1]+=newboard[i+10]
+      for i in range(7):
+         shuffled_board[2]+=newboard[i+19]     
+        
+      return shuffled_board
+  
+def current_display(button_pressed):
+   global current_target
+   global correct
+   global block
+   global start
+   if button_pressed == target[current_target]:
+      start = time.time()
+      timer()
+      correct += 1
+      if current_target == len(target)-1:
+         current_target = 0
+         block += 1
+      else:
+         current_target += 1
+   if correct == 33:
+      quit() 
+   data.set(target[current_target])
+
+window = Tk()
+data = StringVar()
+
+frame_top = Frame(window)
+frame_top.pack(side="top", pady=4, padx=4)
+frame_bottom = Frame(window, borderwidth=4, relief=RAISED)
+frame_bottom.pack(side="bottom", pady=4, padx=4)
+
+textbox = Label(frame_top, textvariable=data, width=40,anchor="center",background="white")
+textbox.pack()
+
+board = 'qwertyuiopasdfghjklzxcvbnm'
+static_board = shuffle(board)
+
+target = 'abcdef'
+current_target = 0
+correct = 0
+block = 0
+start = time.time()
+data.set(target[current_target])
+
+for row in range(len(static_board)):
+   keyboard = Frame(frame_bottom)
+   keyboard.pack(side="top",pady=1, padx=1)
+   for letter in static_board[row]:
+      letters = Frame(keyboard,height=32, width=32)
+      letters.pack_propagate(0) # don't shrink
+      letters.pack(side="left",pady=1, padx=1)       
+      alpha = Button(letters, text=letter,command=lambda button_pressed=letter: current_display(button_pressed))
+      alpha.pack(side="left")
+
+window.mainloop()
